@@ -1,0 +1,15 @@
+certs/ca-key.pem
+certs/ca.pem
+certs/device-001-key.pem
+certs/device-001.pem
+certs/device-002-key.pem
+certs/device-002.pem
+certs/device-003-key.pem
+certs/device-003.pem
+certs/expired-device-key.pem
+certs/expired-device.pem
+certs/server-key.pem
+certs/server.pem
+certs/wrong-ca.pem
+certs/wrong-device-key.pem
+certs/wrong-device.pem

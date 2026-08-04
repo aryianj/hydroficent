@@ -19,6 +19,7 @@ class WaterSensorMQTT:
         self.counter = 0
 
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        
         self.client.tls_set(
             ca_certs=TLS_CONFIG["ca_certs"],    # Trust this CA
             certfile=None,                       # No client cert (server-only TLS)
