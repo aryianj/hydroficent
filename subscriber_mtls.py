@@ -16,7 +16,6 @@ SUBSCRIBER_ID = "dashboard"
 
 # Certificate files
 CA_CERT = "certs/ca.pem"
-# Note: In a real system, the dashboard would have its own certificate.
 
 CLIENT_CERT = "certs/device-001.pem"
 CLIENT_KEY = "certs/device-001-key.pem"

@@ -10,7 +10,6 @@ TLS_CONFIG = {
     "broker_port": 8883,              # TLS port (not 1883!)
 }
 
-
 def on_connect(client, userdata, flags, reason_code, properties):
     print('=' * 50)
     print('GRAND MARINA WATER MONITORING DASHBOARD')
@@ -20,8 +19,8 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # Subscribes to hydroficient/grandmarina/# (all Grand Marina topics)
     client.subscribe("hydroficient/grandmarina/#")
 
-# Displays readings in a formatted way
 def on_message(client, userdata, msg):
+
     try:
         data = json.loads(msg.payload.decode())
         print("-" * 40)
