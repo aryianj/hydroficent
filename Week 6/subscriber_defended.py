@@ -82,30 +82,18 @@ def check_sequence(message_dict):
         return False, f"Sequence {sequence} <= last seen {last_seen} (replay detected)"
 
 def validate_message(message_dict):
-    """
-    Run all three validation checks in order: HMAC → Timestamp → Sequence.
-
-    Why this order?
-    - HMAC first: if the message was tampered with, no point checking the rest
-    - Timestamp second: catches old replayed messages
-    - Sequence last: catches recent replays that pass the timestamp check
-
-    Returns (True, results_dict) if all pass, (False, results_dict) if any fail.
-    """
     results = {
         "hmac": {"passed": False, "detail": ""},
         "timestamp": {"passed": False, "detail": ""},
         "sequence": {"passed": False, "detail": ""}
     }
 
-    # Check 1: HMAC
     hmac_ok, hmac_reason = verify_hmac(message_dict)
     results["hmac"]["passed"] = hmac_ok
     results["hmac"]["detail"] = "Valid" if hmac_ok else hmac_reason
     if not hmac_ok:
         return False, results
 
-    # Check 2: Timestamp freshness
     ts_ok, age = check_timestamp(message_dict)
     if age >= 0:
         results["timestamp"]["detail"] = f"Age: {age:.1f}s (max: {MAX_AGE_SECONDS}s)"
@@ -115,7 +103,6 @@ def validate_message(message_dict):
     if not ts_ok:
         return False, results
 
-    # Check 3: Sequence counter
     seq_ok, seq_reason = check_sequence(message_dict)
     results["sequence"]["passed"] = seq_ok
     results["sequence"]["detail"] = "Valid (new sequence)" if seq_ok else seq_reason
@@ -191,7 +178,6 @@ def main():
     client.on_message = on_message
     client.on_subscribe = on_subscribe
 
-    # Configure mTLS (same as Project 5)
     try:
         client.tls_set(
             ca_certs=CA_CERT,

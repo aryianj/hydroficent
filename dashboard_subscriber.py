@@ -5,9 +5,9 @@ import ssl
 from pathlib import Path
 
 TLS_CONFIG = {
-    "ca_certs": "certs/ca.pem",      # Path to CA certificate
+    "ca_certs": "certs/ca.pem",      
     "broker_host": "localhost",
-    "broker_port": 8883,              # TLS port (not 1883!)
+    "broker_port": 8883,            
 }
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -16,7 +16,6 @@ def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected at: {datetime.now(timezone.utc).strftime('%m-%d-%Y %T:%M')} ")
     print('=' * 50)
     print('\n')
-    # Subscribes to hydroficient/grandmarina/# (all Grand Marina topics)
     client.subscribe("hydroficient/grandmarina/#")
 
 def on_message(client, userdata, msg):
@@ -34,17 +33,16 @@ def on_message(client, userdata, msg):
     except json.JSONDecodeError:
         print(f"Raw message: {msg.payload.decode()}")
 
-# Connects to the broker
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_connect = on_connect
 client.on_message = on_message
 
 client.tls_set(
-    ca_certs=TLS_CONFIG["ca_certs"],    # Trust this CA
-    certfile=None,                       # No client cert (server-only TLS)
-    keyfile=None,                        # No client key
-    cert_reqs=ssl.CERT_REQUIRED,         # Verify server certificate
-    tls_version=ssl.PROTOCOL_TLS,        # Use modern TLS
+    ca_certs=TLS_CONFIG["ca_certs"],   
+    certfile=None,                      
+    keyfile=None,                        
+    cert_reqs=ssl.CERT_REQUIRED,        
+    tls_version=ssl.PROTOCOL_TLS,        
 )
 
 ca_path = Path(TLS_CONFIG["ca_certs"])

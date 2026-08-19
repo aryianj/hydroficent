@@ -1,39 +1,36 @@
 import ipaddress
-from datetime import datetime, timedelta, timezone # for setting valid from and valid until
-from pathlib import Path # file path handling
+from datetime import datetime, timedelta, timezone
+from pathlib import Path 
 
-from cryptography import x509 # certificate building library
-from cryptography.x509.oid import NameOID # standard identifiers for certificate fields
-from cryptography.hazmat.primitives import hashes, serialization # SHA256 & saving certificates to files
-from cryptography.hazmat.primitives.asymmetric import rsa # RSA key generation
+from cryptography import x509
+from cryptography.x509.oid import NameOID 
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa 
 
 def generate_ca_certificate():
     print('\n[1 / 3] Generating Authority (CA)...')
 
-    # Generate private key for CA
     print('        Generating CA private key (2048 bits)...')
     ca_key = rsa.generate_private_key(
-        public_exponent=65537, # standard, secure value
-        key_size=2048, # 2048-bit encryption for learning (production might use 4096)
+        public_exponent=65537, 
+        key_size=2048, 
     )
 
-    # Define the CA's identity
     ca_name = x509.Name([
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'Grand Marina Hotel'),
         x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Water Systems Security"),
         x509.NameAttribute(NameOID.COMMON_NAME, 'Grand Marina Root CA'),
     ])
 
-    # Build and sign the CA certificate
     print('        Creating CA certificate (valid for 10 years)...')
     ca_cert = (
         x509.CertificateBuilder()
         .subject_name(ca_name)
-        .issuer_name(ca_name) # self-signed: issuer = subject
+        .issuer_name(ca_name) 
         .public_key(ca_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.now(timezone.utc))
-        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=3650)) # 3650 = 10 years
+        .not_valid_after(datetime.now(timezone.utc) + timedelta(days=3650)) 
         .add_extension(
             x509.BasicConstraints(ca=True, path_length=None),
             critical=True,
@@ -71,7 +68,7 @@ def generate_server_certificate(ca_key, ca_cert):
             .not_valid_before(datetime.now(timezone.utc))
             .not_valid_after(datetime.now(timezone.utc) + timedelta(days=365)) 
             .add_extension(
-                x509.SubjectAlternativeName([ # certificate works for all listed names
+                x509.SubjectAlternativeName([
                     x509.DNSName('localhost'),
                     x509.IPAddress(ipaddress.IPv4Address('127.0.0.1'))
                 ]),
@@ -93,18 +90,15 @@ def save_certificates(ca_cert, server_cert, server_key, output_dir='certs'):
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)
 
-    # Save CA certificate (public)
     with open(output_path / 'ca.pem', 'wb') as f:
         f.write(ca_cert.public_bytes(serialization.Encoding.PEM))
     print('        Saved: certs\ca.pem...')
 
 
-    # Save server certificate (public)
     with open(output_path / 'server.pem', 'wb') as f:
         f.write(server_cert.public_bytes(serialization.Encoding.PEM))
     print('        Saved: certs\server.pem...')
 
-    # Save server private key 
     with open(output_path / 'server-key.pem', 'wb') as f:
         f.write(server_key.private_bytes(
             encoding=serialization.Encoding.PEM,

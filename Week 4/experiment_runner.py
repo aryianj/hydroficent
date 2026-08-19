@@ -22,8 +22,6 @@ except ImportError:
 
 
 class ExperimentRunner:
-    """Runs various TLS experiments"""
-
     def __init__(self, tls_enabled: bool = True, ca_path: str = "certs/ca.pem"):
         self.tls_enabled = tls_enabled
         self.ca_path = ca_path
@@ -35,7 +33,6 @@ class ExperimentRunner:
         self.latencies: List[float] = []
 
     def setup_client(self, client_id: str = "experiment-runner"):
-        """Setup MQTT client with optional TLS"""
         self.client = mqtt.Client(
             client_id=client_id,
             callback_api_version=CallbackAPIVersion.VERSION2
@@ -71,7 +68,6 @@ class ExperimentRunner:
 
     def _on_message(self, client, userdata, msg):
         self.messages_received += 1
-        # For latency tracking
         try:
             payload = json.loads(msg.payload.decode())
             if "sent_at" in payload:
@@ -81,11 +77,9 @@ class ExperimentRunner:
             pass
 
     def connect(self) -> bool:
-        """Connect to broker"""
         try:
             self.client.connect(self.broker_host, self.broker_port, keepalive=60)
             self.client.loop_start()
-            # Wait for connection
             timeout = 5
             start = time.time()
             while not self.connected and (time.time() - start) < timeout:
@@ -96,16 +90,11 @@ class ExperimentRunner:
             return False
 
     def disconnect(self):
-        """Disconnect from broker"""
         if self.client:
             self.client.loop_stop()
             self.client.disconnect()
 
-    # =========================================
-    # Experiment: Publish (for eavesdrop test)
-    # =========================================
     def run_publish(self, count: int = 10, interval: float = 1.0):
-        """Publish test messages for eavesdropping experiment"""
         print(f"\n{'='*50}")
         print(f"  Publishing {count} messages")
         print(f"  TLS: {'ON' if self.tls_enabled else 'OFF'}")
@@ -135,11 +124,7 @@ class ExperimentRunner:
         self.disconnect()
         print("\nDone publishing!")
 
-    # =========================================
-    # Experiment: Connection test
-    # =========================================
     def run_connect_test(self, no_ca: bool = False):
-        """Test connection to broker"""
         print(f"\n{'='*50}")
         print(f"  Connection Test")
         print(f"  TLS: {'ON' if self.tls_enabled else 'OFF'}")
@@ -158,7 +143,6 @@ class ExperimentRunner:
                 tls_version=ssl.PROTOCOL_TLS,
             )
         elif self.tls_enabled and no_ca:
-            # Connect without CA verification (insecure!)
             self.client.tls_set(cert_reqs=ssl.CERT_NONE)
             self.client.tls_insecure_set(True)
 
@@ -169,11 +153,7 @@ class ExperimentRunner:
         except Exception as e:
             print(f"FAILED: {e}")
 
-    # =========================================
-    # Experiment: Latency measurement
-    # =========================================
     def run_latency_test(self, count: int = 50):
-        """Measure round-trip latency"""
         print(f"\n{'='*50}")
         print(f"  Latency Test")
         print(f"  TLS: {'ON' if self.tls_enabled else 'OFF'}")
@@ -187,7 +167,6 @@ class ExperimentRunner:
             print("Failed to connect!")
             return
 
-        # Subscribe to echo topic
         echo_topic = "grandmarina/latency/echo"
         self.client.subscribe(echo_topic, qos=1)
         time.sleep(0.5)
@@ -198,10 +177,8 @@ class ExperimentRunner:
             send_time = time.time()
             self.client.publish(echo_topic, json.dumps(payload), qos=1)
 
-            # Wait for message to come back (simple echo via retain)
             time.sleep(0.1)
 
-            # Simulate latency measurement (message echo)
             latency = (time.time() - send_time) * 1000
             self.latencies.append(latency)
 
@@ -210,7 +187,6 @@ class ExperimentRunner:
 
         self.disconnect()
 
-        # Report results
         if self.latencies:
             avg = statistics.mean(self.latencies)
             min_lat = min(self.latencies)
@@ -227,11 +203,7 @@ class ExperimentRunner:
             print(f"  Std deviation: {std:.2f} ms")
             print(f"{'='*50}\n")
 
-    # =========================================
-    # Experiment: Stress test
-    # =========================================
     def run_stress_test(self, rate: int = 10, duration: int = 30):
-        """Stress test at given message rate"""
         print(f"\n{'='*50}")
         print(f"  Stress Test")
         print(f"  TLS: {'ON' if self.tls_enabled else 'OFF'}")
@@ -264,13 +236,11 @@ class ExperimentRunner:
             else:
                 errors += 1
 
-            # Pace to achieve target rate
             next_send = start_time + (sent * interval)
             sleep_time = next_send - time.time()
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-            # Progress update every 5 seconds
             elapsed = time.time() - start_time
             if int(elapsed) % 5 == 0 and int(elapsed) > 0:
                 actual_rate = sent / elapsed
@@ -278,7 +248,6 @@ class ExperimentRunner:
 
         self.disconnect()
 
-        # Report results
         elapsed = time.time() - start_time
         actual_rate = sent / elapsed if elapsed > 0 else 0
         success_rate = (sent / (sent + errors)) * 100 if (sent + errors) > 0 else 0
@@ -300,17 +269,14 @@ class ExperimentRunner:
 
 
 def generate_expired_cert():
-    """Generate an expired certificate for testing"""
     if not HAS_CRYPTO:
         print("ERROR: cryptography library required for cert generation")
         return
 
     print("\nGenerating expired certificate for testing...")
 
-    # Generate key
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-    # Create expired certificate (valid from 2 years ago to 1 year ago)
     name = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
     ])
@@ -340,7 +306,6 @@ def generate_expired_cert():
 
 
 def generate_wrong_ca():
-    """Generate a different CA certificate for testing"""
     if not HAS_CRYPTO:
         print("ERROR: cryptography library required for cert generation")
         return

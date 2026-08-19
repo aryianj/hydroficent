@@ -7,9 +7,9 @@ import ssl
 from pathlib import Path
 
 TLS_CONFIG = {
-    "ca_certs": "certs/ca.pem",      # Path to CA certificate
+    "ca_certs": "certs/ca.pem",      
     "broker_host": "localhost",
-    "broker_port": 8883,              # TLS port (not 1883!)
+    "broker_port": 8883,              
 }
 
 class WaterSensorMQTT:
@@ -21,11 +21,11 @@ class WaterSensorMQTT:
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         
         self.client.tls_set(
-            ca_certs=TLS_CONFIG["ca_certs"],    # Trust this CA
-            certfile=None,                       # No client cert (server-only TLS)
-            keyfile=None,                        # No client key
-            cert_reqs=ssl.CERT_REQUIRED,         # Verify server certificate
-            tls_version=ssl.PROTOCOL_TLS,        # Use modern TLS
+            ca_certs=TLS_CONFIG["ca_certs"],   
+            certfile=None,                      
+            keyfile=None,                        
+            cert_reqs=ssl.CERT_REQUIRED,         
+            tls_version=ssl.PROTOCOL_TLS,        
         )
 
         ca_path = Path(TLS_CONFIG["ca_certs"])
